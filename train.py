@@ -15,10 +15,11 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 
-from model import RANZCRResNet200D, EffNet_b5
+from model import RANZCRResNet200D, EffNet_b5, EffNet_b0
 from dataset import RANZERDataset, Transforms_Train, Transforms_Valid
 from utils import *
 from config import *
+from lamb import Lamb, log_lamb_rs
 
 
 ##################################################################
@@ -122,18 +123,23 @@ for VAL_FOLD_ID in range(0, 4):
     valid_loader = torch.utils.data.DataLoader(dataset_valid, batch_size=VAL_BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
     # Init model
-    # model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
-    model = EffNet_b5(out_dim=len(TARGET_COLS), pretrained=True)
+    if BACKBONE == "effnet_b5":
+        model = EffNet_b5(out_dim=len(TARGET_COLS), pretrained=True)
+    elif BACKBONE == "effnet_b0":
+        model = EffNet_b0(out_dim=len(TARGET_COLS), pretrained=True)
+    elif BACKBONE == "resnet200d":
+        model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
     model = model.to(device)
 
     # Optimization
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
+    # optimizer = Lamb(model.parameters(), lr=INIT_LR, weight_decay=0, betas=(.9, .999))
     if DataParallel:
         model = nn.DataParallel(model)
     # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS - WARMUP_EPOCH)
-    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, N_EPOCHS - WARMUP_EPOCH)
-    scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=10, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
+    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((N_EPOCHS-WARMUP_EPOCH)/3), T_mult=2)
+    scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=WARMUP_Multiplier, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
 
     # For logging
     log = {}
@@ -176,7 +182,8 @@ for VAL_FOLD_ID in range(0, 4):
 
         # run 1 epoch for Debug mode
         if DEBUG:
-            break
+            pass
+            # break
 
     # Save final model
     torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_final.pth')
