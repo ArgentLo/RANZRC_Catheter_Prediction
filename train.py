@@ -15,7 +15,7 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 
-from model import RANZCRResNet200D
+from model import RANZCRResNet200D, EffNet_b5
 from dataset import RANZERDataset, Transforms_Train, Transforms_Valid
 from utils import *
 from config import *
@@ -97,77 +97,83 @@ def valid_func(valid_loader):
 device = torch.device('cuda')
 seed_everything(SEED)
 
+for VAL_FOLD_ID in range(0, 4):
 
-# Load train.csv
-df_train = pd.read_csv('./dataset/train_with_folds.csv')
-df_train["file_path"] = df_train.StudyInstanceUID.apply(lambda x: os.path.join(DATA_PATH, f'{x}.jpg'))
+    ##########################################################################
 
+    # Load train.csv
+    df_train = pd.read_csv('./dataset/train_with_folds.csv')
+    df_train["file_path"] = df_train.StudyInstanceUID.apply(lambda x: os.path.join(DATA_PATH, f'{x}.jpg'))
 
-# DEBUG mode
-if DEBUG:
-    df_train = df_train.sample(frac=DEBUG_SIZE)
-# TARGET_COLS = df_train.iloc[:, 1:12].columns.tolist()
+    # DEBUG mode
+    if DEBUG:
+        df_train = df_train.sample(frac=DEBUG_SIZE)
+    # TARGET_COLS = df_train.iloc[:, 1:12].columns.tolist()
 
-# Load image dataset
-dataset = RANZERDataset(df_train, 'train', transform=Transforms_Train)
-df_train_this = df_train[df_train['fold'] != VAL_FOLD_ID]
-df_valid_this = df_train[df_train['fold'] == VAL_FOLD_ID]
-dataset_train = RANZERDataset(df_train_this, 'train', transform=Transforms_Train)
-dataset_valid = RANZERDataset(df_valid_this, 'valid', transform=Transforms_Valid)
+    # Load image dataset
+    dataset = RANZERDataset(df_train, 'train', transform=Transforms_Train)
+    df_train_this = df_train[df_train['fold'] != VAL_FOLD_ID]
+    df_valid_this = df_train[df_train['fold'] == VAL_FOLD_ID]
+    dataset_train = RANZERDataset(df_train_this, 'train', transform=Transforms_Train)
+    dataset_valid = RANZERDataset(df_valid_this, 'valid', transform=Transforms_Valid)
 
-# Dataloader
-train_loader = torch.utils.data.DataLoader(dataset_train, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True)
-valid_loader = torch.utils.data.DataLoader(dataset_valid, batch_size=VAL_BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
+    # Dataloader
+    train_loader = torch.utils.data.DataLoader(dataset_train, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True)
+    valid_loader = torch.utils.data.DataLoader(dataset_valid, batch_size=VAL_BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
-# Init model
-model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
-# model = EffNet_b5(out_dim=len(TARGET_COLS), pretrained=True)
-model = model.to(device)
+    # Init model
+    # model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
+    model = EffNet_b5(out_dim=len(TARGET_COLS), pretrained=True)
+    model = model.to(device)
 
-# Optimization
-criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=INIT_LR/WARMUP_FACTOR)
-scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS, eta_min=1e-7)
-scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=10, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
+    # Optimization
+    criterion = nn.BCEWithLogitsLoss()
+    optimizer = optim.Adam(model.parameters(), lr=INIT_LR/WARMUP_FACTOR)
+    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS, eta_min=1e-7)
+    scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=10, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
 
-# For logging
-log = {}
-roc_auc_max = 0.
-loss_min = 99999
-not_improving = 0
+    # For logging
+    log = {}
+    roc_auc_max = 0.
+    loss_min = 99999
+    not_improving = 0
 
-# Training Loop
-for epoch in range(1, N_EPOCHS+1):
-    scheduler_warmup.step(epoch-1)
-    loss_train = train_func(train_loader)
-    loss_valid, roc_auc = valid_func(valid_loader)
+    ##########################################################################
 
-    log['loss_train'] = log.get('loss_train', []) + [loss_train]
-    log['loss_valid'] = log.get('loss_valid', []) + [loss_valid]
-    log['lr'] = log.get('lr', []) + [optimizer.param_groups[0]["lr"]]
-    log['roc_auc'] = log.get('roc_auc', []) + [roc_auc]
+    # Training Loop
+    for epoch in range(1, N_EPOCHS+1):
+        scheduler_warmup.step(epoch-1)
+        loss_train = train_func(train_loader)
+        loss_valid, roc_auc = valid_func(valid_loader)
 
-    content = time.ctime() + ' ' + f'Fold {VAL_FOLD_ID}, Epoch {epoch}, lr: {optimizer.param_groups[0]["lr"]:.7f}, loss_train: {loss_train:.5f}, loss_valid: {loss_valid:.5f}, roc_auc: {roc_auc:.6f}.'
-    print(content)
-    not_improving += 1
-    
-    if roc_auc > roc_auc_max:
-        print(f'roc_auc_max ({roc_auc_max:.6f} --> {roc_auc:.6f}). Saving model ...')
-        torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_fold{VAL_FOLD_ID}_best_AUC.pth')
-        roc_auc_max = roc_auc
-        not_improving = 0
+        log['loss_train'] = log.get('loss_train', []) + [loss_train]
+        log['loss_valid'] = log.get('loss_valid', []) + [loss_valid]
+        log['lr'] = log.get('lr', []) + [optimizer.param_groups[0]["lr"]]
+        log['roc_auc'] = log.get('roc_auc', []) + [roc_auc]
 
-    if loss_valid < loss_min:
-        loss_min = loss_valid
-        torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_fold{VAL_FOLD_ID}_best_loss.pth')
+        content = ">>>>>>  " + time.ctime() + '\n' + f'Fold {VAL_FOLD_ID}, Epoch {epoch}, lr: {optimizer.param_groups[0]["lr"]:.7f}, loss_train: {loss_train:.5f}, loss_valid: {loss_valid:.5f}, roc_auc: {roc_auc:.6f}.'
+        print(content)
+        not_improving += 1
         
-    if not_improving == EARLY_STOP:
-        print('Early Stopping...')
-        break
-    
-    ##################################################################
-    ## only run 1 epoch here
-    ##################################################################
-    break
+        if roc_auc > roc_auc_max:
+            print(f'roc_auc_max ({roc_auc_max:.6f} --> {roc_auc:.6f}). Saving model ...')
+            torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_best_AUC.pth')
+            roc_auc_max = roc_auc
+            not_improving = 0
 
-torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_fold{VAL_FOLD_ID}_final.pth')
+        if loss_valid < loss_min:
+            loss_min = loss_valid
+            torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_best_loss.pth')
+
+        print("###"*20 + "\n")
+            
+        if not_improving == EARLY_STOP:
+            print('Early Stopping...')
+            break
+
+        # run 1 epoch for Debug mode
+        if DEBUG:
+            break
+
+    # Save final model
+    torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_final.pth')
