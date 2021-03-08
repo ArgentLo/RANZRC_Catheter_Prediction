@@ -1,11 +1,11 @@
 IMG_SIZE = 512
 SEED = 4213
 WARMUP_EPOCH = 1
-INIT_LR = 1e-4/3
+INIT_LR = 4e-4
 WARMUP_FACTOR = 10
 NUM_WORKERS = 4
 
-BATCH_SIZE = 8 # 64
+BATCH_SIZE = 18 # 64
 VAL_BATCH_SIZE = 32
 N_EPOCHS = 30
 
@@ -31,4 +31,5 @@ TARGET_COLS = ['ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
                'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal', 'Swan Ganz Catheter Present']
 
 EARLY_STOP = 5
-use_amp = False
+USE_AMP = True
+DataParallel = False

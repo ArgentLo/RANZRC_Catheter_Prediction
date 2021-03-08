@@ -29,14 +29,14 @@ def train_func(train_loader):
 
     model.train()
     bar = tqdm(train_loader)
-    if use_amp:
+    if USE_AMP:
         scaler = torch.cuda.amp.GradScaler()
     losses = []
     for batch_idx, (images, targets) in enumerate(bar):
 
         images, targets = images.to(device), targets.to(device)
         
-        if use_amp:
+        if USE_AMP:
             with torch.cuda.amp.autocast():
                 logits = model(images)
                 loss = criterion(logits, targets)
@@ -128,8 +128,11 @@ for VAL_FOLD_ID in range(0, 4):
 
     # Optimization
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=INIT_LR/WARMUP_FACTOR)
-    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS, eta_min=1e-7)
+    optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
+    if DataParallel:
+        model = nn.DataParallel(model)
+    # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS - WARMUP_EPOCH)
+    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, N_EPOCHS - WARMUP_EPOCH)
     scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=10, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
 
     # For logging
