@@ -49,10 +49,19 @@ class RANZERDataset(Dataset):
 #################     Augmentation     ###############
 ######################################################
 
+
+# # Plain Training Augmentation
+# Transforms_Train = A.Compose([
+#     A.Resize(IMG_SIZE, IMG_SIZE),
+#     A.Normalize()
+# ])
+
+
+
 # Training Augmentation
 Transforms_Train = A.Compose([
 
-    A.RandomResizedCrop(IMG_SIZE, IMG_SIZE, scale=(0.95, 1), p=1), 
+    A.RandomResizedCrop(IMG_SIZE, IMG_SIZE, scale=(0.9, 1), p=1), 
     A.HorizontalFlip(p=0.5),
 
     # Brightness + Contract
@@ -60,35 +69,30 @@ Transforms_Train = A.Compose([
 
     # Blurring + Distortion
     A.OneOf([
-        A.GaussNoise(var_limit=[10, 50]),
-        A.GaussianBlur(),
-        A.MotionBlur(),
-        A.MedianBlur(),
-    ], p=0.3),
+        A.GaussNoise(var_limit=[5.0, 30.0]), A.MotionBlur(blur_limit=5), 
+        A.MedianBlur(blur_limit=5), A.GaussianBlur(blur_limit=5)], p=0.3),
     A.OneOf([
-        A.OpticalDistortion(distort_limit=1.0),
-        A.GridDistortion(num_steps=5, distort_limit=1.),
-        A.ElasticTransform(alpha=3),
-    ], p=0.3),
+        A.OpticalDistortion(distort_limit=1.0), A.GridDistortion(num_steps=5, distort_limit=1.),
+        A.ElasticTransform(alpha=3)], p=0.3),
 
     # Some final Shift+Saturation
-    A.CLAHE(clip_limit=(1,4), p=0.75),
-    A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=15, val_shift_limit=10, p=0.5),
-    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.75),
+    A.CLAHE(clip_limit=(1,4), p=0.3),
+    A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=15, val_shift_limit=10, p=0.3),
+    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.3),
 
     # Resize
     A.Resize(IMG_SIZE, IMG_SIZE),
 
-    # New from HeQishen
-    A.OneOf([
-        JpegCompression(),
-        Downscale(scale_min=0.1, scale_max=0.15),
-    ], p=0.2),
-    IAAPiecewiseAffine(p=0.2),
-    IAASharpen(p=0.2),
+    # # New from HeQishen's kernel
+    # A.OneOf([
+    #     JpegCompression(),
+    #     Downscale(scale_min=0.1, scale_max=0.15),
+    # ], p=0.2),
+    # IAAPiecewiseAffine(p=0.2),
+    # IAASharpen(p=0.2),
 
     # cut holes on imgs
-    A.Cutout(max_h_size=int(IMG_SIZE * 0.11), max_w_size=int(IMG_SIZE * 0.11), num_holes=3, p=0.4),
+    A.Cutout(max_h_size=int(IMG_SIZE * 0.11), max_w_size=int(IMG_SIZE * 0.11), num_holes=3, p=0.3),
     A.Normalize(),
 ])
 
