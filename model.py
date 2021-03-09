@@ -8,7 +8,7 @@ filterwarnings("ignore")
 class RANZCRResNet200D(nn.Module):
     def __init__(self, model_name='resnet200d', out_dim=11, pretrained=False):
         super().__init__()
-        self.model = timm.create_model(model_name, pretrained=False)
+        self.model = timm.create_model(model_name, pretrained=pretrained)
         ## pretrain PATH on Kaggle
         # if pretrained:
         #     pretrained_path = '../input/resnet200d-pretrained-weight/resnet200d_ra2-bdba9bf9.pth'
@@ -30,7 +30,7 @@ class RANZCRResNet200D(nn.Module):
 class EffNet_b3(nn.Module):
     def __init__(self, model_name="efficientnet_b3", out_dim=11, pretrained=False):
         super().__init__()
-        self.model = timm.create_model(model_name, pretrained=False)
+        self.model = timm.create_model(model_name, pretrained=pretrained)
 
         # print(self.model)
         ## pretrain PATH on Kaggle
@@ -54,7 +54,7 @@ class EffNet_b3(nn.Module):
 class EffNet_b0(nn.Module):
     def __init__(self, model_name="efficientnet_b0", out_dim=11, pretrained=False):
         super().__init__()
-        self.model = timm.create_model(model_name, pretrained=False)
+        self.model = timm.create_model(model_name, pretrained=pretrained)
 
         # print(self.model)
         ## pretrain PATH on Kaggle

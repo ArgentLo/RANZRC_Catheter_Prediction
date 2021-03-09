@@ -3,9 +3,9 @@ import os
 #### Regular args
 BATCH_SIZE   = 48  # 64
 WARMUP_EPOCH = 2
-COSINE_EPO   = 10
+COSINE_EPO   = 30
 N_EPOCHS     = WARMUP_EPOCH + COSINE_EPO  # 30
-INIT_LR      = 2e-4  # 5e-4
+INIT_LR      = 3e-4  # 5e-4
 
 
 #### Backbone
