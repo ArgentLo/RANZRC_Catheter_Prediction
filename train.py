@@ -15,7 +15,7 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 
-from model import RANZCRResNet200D, EffNet_b5, EffNet_b0
+from model import RANZCRResNet200D, EffNet_b3, EffNet_b0
 from dataset import RANZERDataset, Transforms_Train, Transforms_Valid
 from utils import *
 from config import *
@@ -123,8 +123,8 @@ for VAL_FOLD_ID in range(0, 4):
     valid_loader = torch.utils.data.DataLoader(dataset_valid, batch_size=VAL_BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS, pin_memory=True)
 
     # Init model
-    if BACKBONE == "effnet_b5":
-        model = EffNet_b5(out_dim=len(TARGET_COLS), pretrained=True)
+    if BACKBONE == "effnet_b3":
+        model = EffNet_b3(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "effnet_b0":
         model = EffNet_b0(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "resnet200d":
@@ -137,8 +137,8 @@ for VAL_FOLD_ID in range(0, 4):
     # optimizer = Lamb(model.parameters(), lr=INIT_LR, weight_decay=0, betas=(.9, .999))
     if DataParallel:
         model = nn.DataParallel(model)
-    # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS - WARMUP_EPOCH)
-    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((N_EPOCHS-WARMUP_EPOCH)/3), T_mult=2)
+    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, COSINE_EPO, eta_min=5e-7)
+    # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((N_EPOCHS-WARMUP_EPOCH)/3), T_mult=2, eta_min=5e-7)
     scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=WARMUP_Multiplier, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
 
     # For logging

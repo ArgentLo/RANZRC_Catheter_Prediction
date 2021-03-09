@@ -27,8 +27,8 @@ class RANZCRResNet200D(nn.Module):
         return output
 
 
-class EffNet_b5(nn.Module):
-    def __init__(self, model_name="efficientnet_b5", out_dim=11, pretrained=False):
+class EffNet_b3(nn.Module):
+    def __init__(self, model_name="efficientnet_b3", out_dim=11, pretrained=False):
         super().__init__()
         self.model = timm.create_model(model_name, pretrained=False)
 
