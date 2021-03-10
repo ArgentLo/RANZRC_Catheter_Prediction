@@ -138,7 +138,7 @@ for VAL_FOLD_ID in range(0, 4):
     if DataParallel:
         model = nn.DataParallel(model)
     # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, COSINE_EPO, eta_min=5e-7)
-    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((COSINE_EPO)/7), T_mult=2, eta_min=1e-7)
+    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((COSINE_EPO)/7), T_mult=2, eta_min=2e-7)
     scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=WARMUP_Multiplier, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
 
     # For logging

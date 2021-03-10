@@ -78,7 +78,7 @@ Transforms_Train = A.Compose([
     # Some final Shift+Saturation
     A.CLAHE(clip_limit=(1,4), p=0.75),
     A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=15, val_shift_limit=10, p=0.5),
-    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.75),
+    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.85),
 
     # Resize
     A.Resize(IMG_SIZE, IMG_SIZE),
