@@ -70,15 +70,15 @@ Transforms_Train = A.Compose([
     # Blurring + Distortion
     A.OneOf([
         A.GaussNoise(var_limit=[5.0, 30.0]), A.MotionBlur(blur_limit=5), 
-        A.MedianBlur(blur_limit=5), A.GaussianBlur(blur_limit=5)], p=0.3),
+        A.MedianBlur(blur_limit=5), A.GaussianBlur(blur_limit=5)], p=0.75),
     A.OneOf([
         A.OpticalDistortion(distort_limit=1.0), A.GridDistortion(num_steps=5, distort_limit=1.),
-        A.ElasticTransform(alpha=3)], p=0.3),
+        A.ElasticTransform(alpha=3)], p=0.75),
 
     # Some final Shift+Saturation
-    A.CLAHE(clip_limit=(1,4), p=0.3),
-    A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=15, val_shift_limit=10, p=0.3),
-    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.3),
+    A.CLAHE(clip_limit=(1,4), p=0.75),
+    A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=15, val_shift_limit=10, p=0.5),
+    A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.75),
 
     # Resize
     A.Resize(IMG_SIZE, IMG_SIZE),
@@ -92,7 +92,7 @@ Transforms_Train = A.Compose([
     # IAASharpen(p=0.2),
 
     # cut holes on imgs
-    A.Cutout(max_h_size=int(IMG_SIZE * 0.11), max_w_size=int(IMG_SIZE * 0.11), num_holes=3, p=0.3),
+    A.Cutout(max_h_size=int(IMG_SIZE * 0.10), max_w_size=int(IMG_SIZE * 0.10), num_holes=5, p=0.75),
     A.Normalize(),
 ])
 

@@ -2,10 +2,11 @@ import os
 
 #### Regular args
 BATCH_SIZE   = 48  # 64
-WARMUP_EPOCH = 2
+WARMUP_EPOCH = 1
 COSINE_EPO   = 30
 N_EPOCHS     = WARMUP_EPOCH + COSINE_EPO  # 30
 INIT_LR      = 3e-4  # 5e-4
+EARLY_STOP   = 20  # if ReStart, should give longer epochs to find minimun after Great LR.  
 
 
 #### Backbone
@@ -29,7 +30,7 @@ TARGET_COLS = ['ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
                'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal', 
                'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal', 'Swan Ganz Catheter Present']
 
-EARLY_STOP = 5
+
 USE_AMP = True
 DataParallel = False
 IMG_SIZE = 512
