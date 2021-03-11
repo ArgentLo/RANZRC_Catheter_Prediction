@@ -15,7 +15,7 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 
-from model import RANZCRResNet200D, EffNet_b3, EffNet_b0
+from model import RANZCRResNet200D, EffNet_b3, EffNet_b0, HRNet_W40, HRNet_W64
 from dataset import RANZERDataset, Transforms_Train, Transforms_Valid
 from utils import *
 from config import *
@@ -98,9 +98,12 @@ def valid_func(valid_loader):
 device = torch.device('cuda')
 seed_everything(SEED)
 
-for VAL_FOLD_ID in range(0, 4):
 
-    ##########################################################################
+FOLD_MIN, FOLD_MAX = 0, 4
+if RESUME_FOLD:
+    FOLD_MIN, FOLD_MAX = RESUME_FOLD, RESUME_FOLD+1
+
+for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
 
     # Load train.csv
     df_train = pd.read_csv('./dataset/train_with_folds.csv')
@@ -109,7 +112,6 @@ for VAL_FOLD_ID in range(0, 4):
     # DEBUG mode
     if DEBUG:
         df_train = df_train.sample(frac=DEBUG_SIZE)
-    # TARGET_COLS = df_train.iloc[:, 1:12].columns.tolist()
 
     # Load image dataset
     dataset = RANZERDataset(df_train, 'train', transform=Transforms_Train)
@@ -129,7 +131,18 @@ for VAL_FOLD_ID in range(0, 4):
         model = EffNet_b0(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "resnet200d":
         model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
+    elif BACKBONE == "hrnet_w40":
+        model = HRNet_W40(out_dim=len(TARGET_COLS), pretrained=True)
+    elif BACKBONE == "hrnet_w64":
+        model = HRNet_W64(out_dim=len(TARGET_COLS), pretrained=True)
+
     model = model.to(device)
+
+    # Resume Training
+    if RESUME_PATH:
+        checkpoint = torch.load(RESUME_PATH)
+        model.load_state_dict(checkpoint)
+        print('>>> Resume Training. Saved Model loaded {}'.format(RESUME_PATH), "\n")
 
     # Optimization
     criterion = nn.BCEWithLogitsLoss()
@@ -137,9 +150,10 @@ for VAL_FOLD_ID in range(0, 4):
     # optimizer = Lamb(model.parameters(), lr=INIT_LR, weight_decay=0, betas=(.9, .999))
     if DataParallel:
         model = nn.DataParallel(model)
-    # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, COSINE_EPO, eta_min=5e-7)
-    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((COSINE_EPO)/7), T_mult=2, eta_min=2e-7)
-    scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=WARMUP_Multiplier, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
+    scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, COSINE_EPO, eta_min=1e-7)
+    # scheduler_cosine = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, int((COSINE_EPO)/7), T_mult=2, eta_min=2e-7)
+    if not RESUME_PATH:
+        scheduler_warmup = GradualWarmupSchedulerV2(optimizer, multiplier=WARMUP_Multiplier, total_epoch=WARMUP_EPOCH, after_scheduler=scheduler_cosine)
 
     # For logging
     log = {}
@@ -151,7 +165,10 @@ for VAL_FOLD_ID in range(0, 4):
 
     # Training Loop
     for epoch in range(1, N_EPOCHS+1):
-        scheduler_warmup.step(epoch-1)
+        if not RESUME_PATH:
+            scheduler_warmup.step(epoch-1)
+        else: 
+            scheduler_cosine.step(epoch-1)
         loss_train = train_func(train_loader)
         loss_valid, roc_auc = valid_func(valid_loader)
 
