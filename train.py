@@ -148,7 +148,7 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
     ClassWeights = ClassWeights.to(device)
     if use_FocalLoss:
         print(">>> Training with FocalLoss")
-        criterion = FocalLoss(alpha=2, gamma=3, pos_weight=ClassWeights)
+        criterion = FocalLoss(alpha=2, gamma=2, pos_weight=ClassWeights)
     else:
         criterion = nn.BCEWithLogitsLoss(pos_weight=ClassWeights)
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)

@@ -14,25 +14,6 @@ filterwarnings("ignore")
 from config import *
 
 
-class FocalLoss(nn.Module):
-    def __init__(self, alpha=0.5, gamma=1.5, logits=True, pos_weight=[1 for _ in range(len(TARGET_COLS))]):
-        super(FocalLoss, self).__init__()
-        self.alpha  = alpha
-        self.gamma  = gamma
-        self.logits = logits
-        self.pos_weight = pos_weight
-
-    def forward(self, inputs, targets):
-        if self.logits:
-            BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction="mean", pos_weight=self.pos_weight)
-        else:
-            BCE_loss = F.binary_cross_entropy(inputs, targets, reduction="mean")
-        pt = torch.exp(-BCE_loss)
-        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
-
-        return F_loss
-
-
 def macro_multilabel_auc(label, pred):
     aucs = []
     for i in range(len(TARGET_COLS)):
@@ -67,3 +48,21 @@ def seed_everything(SEED):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True # for faster training, but not deterministic
     
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.5, gamma=1.5, logits=True, pos_weight=[1 for _ in range(len(TARGET_COLS))]):
+        super(FocalLoss, self).__init__()
+        self.alpha  = alpha
+        self.gamma  = gamma
+        self.logits = logits
+        self.pos_weight = pos_weight
+
+    def forward(self, inputs, targets):
+        if self.logits:
+            BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction="mean", pos_weight=self.pos_weight)
+        else:
+            BCE_loss = F.binary_cross_entropy(inputs, targets, reduction="mean")
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+
+        return F_loss
