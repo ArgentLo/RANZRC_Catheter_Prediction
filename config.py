@@ -1,11 +1,11 @@
 import os
 
 #### Regular args
-BATCH_SIZE   = 28  # 64
+BATCH_SIZE   = 64  # 64
 WARMUP_EPOCH = 1
 COSINE_EPO   = 35
 N_EPOCHS     = WARMUP_EPOCH + COSINE_EPO  # 30
-INIT_LR      = 4e-4  # 5e-4
+INIT_LR      = 3e-4  # 5e-4
 EARLY_STOP   = 7  # if ReStart, should give longer epochs to find minimun after Great LR.  
 RESUME_FOLD  = None  # None
 RESUME_PATH  = None  #"./saved_models/resnet200d_Fold{}_best_AUC.pth".format(RESUME_FOLD)
@@ -14,8 +14,8 @@ RESUME_PATH  = None  #"./saved_models/resnet200d_Fold{}_best_AUC.pth".format(RES
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # BACKBONE = "effnet_b3"
 # BACKBONE = "effnet_b0"
-# BACKBONE = "hrnet_w40"  # HRNet
-BACKBONE = "hrnet_w64"
+# BACKBONE = "resnest50d"  # resnest
+BACKBONE = "rexnet_100"  # rexnet
 # BACKBONE = "resnet200d"
 
 

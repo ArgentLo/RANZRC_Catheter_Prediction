@@ -15,7 +15,7 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 
-from model import RANZCRResNet200D, EffNet_b3, EffNet_b0, HRNet_W40, HRNet_W64
+from model import RANZCRResNet200D, EffNet_b3, EffNet_b0, RESNEST_50D, REXNET_100
 from dataset import RANZERDataset, Transforms_Train, Transforms_Valid
 from utils import *
 from config import *
@@ -131,10 +131,10 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
         model = EffNet_b0(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "resnet200d":
         model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
-    elif BACKBONE == "hrnet_w40":
-        model = HRNet_W40(out_dim=len(TARGET_COLS), pretrained=True)
-    elif BACKBONE == "hrnet_w64":
-        model = HRNet_W64(out_dim=len(TARGET_COLS), pretrained=True)
+    elif BACKBONE == "resnest50d":
+        model = RESNEST_50D(out_dim=len(TARGET_COLS), pretrained=True)
+    elif BACKBONE == "rexnet_100":
+        model = REXNET_100(out_dim=len(TARGET_COLS), pretrained=True)
 
     model = model.to(device)
 
