@@ -107,7 +107,7 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
 
     # Load train.csv
     df_train = pd.read_csv('./dataset/train_with_folds.csv')
-    df_train["file_path"] = df_train.StudyInstanceUID.apply(lambda x: os.path.join(DATA_PATH, f'{x}.jpg'))
+    df_train["file_path"] = df_train.StudyInstanceUID.apply(lambda x: os.path.join(DATA_PATH, f'{x}.png'))  # resize jpg to png
 
     # DEBUG mode
     if DEBUG:
@@ -145,7 +145,12 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
         print('>>> Resume Training. Saved Model loaded {}'.format(RESUME_PATH), "\n")
 
     # Optimization
-    criterion = nn.BCEWithLogitsLoss()
+    ClassWeights = ClassWeights.to(device)
+    if use_FocalLoss:
+        print(">>> Training with FocalLoss")
+        criterion = FocalLoss(alpha=2, gamma=3, pos_weight=ClassWeights)
+    else:
+        criterion = nn.BCEWithLogitsLoss(pos_weight=ClassWeights)
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
     # optimizer = Lamb(model.parameters(), lr=INIT_LR, weight_decay=0, betas=(.9, .999))
     if DataParallel:
@@ -183,13 +188,21 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
         
         if roc_auc > roc_auc_max:
             print(f'roc_auc_max ({roc_auc_max:.6f} --> {roc_auc:.6f}). Saving model ...')
-            torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_best_AUC.pth')
+            if use_FocalLoss:
+                save_name = f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_Size{IMG_SIZE}_Focal_best_AUC.pth'
+            else: 
+                save_name = f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_Size{IMG_SIZE}_best_AUC.pth'
+            torch.save(model.state_dict(), save_name)
             roc_auc_max = roc_auc
             not_improving = 0
 
         if loss_valid < loss_min:
             loss_min = loss_valid
-            torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_best_loss.pth')
+            if use_FocalLoss:
+                save_name = f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_Size{IMG_SIZE}_Focal_best_loss.pth'
+            else: 
+                save_name = f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_Size{IMG_SIZE}_best_loss.pth'
+            torch.save(model.state_dict(), save_name)
 
         print("###"*20 + "\n")
             
@@ -203,4 +216,8 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
             # break
 
     # Save final model
-    torch.save(model.state_dict(), f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_final.pth')
+    if use_FocalLoss:
+        save_name = f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_Size{IMG_SIZE}_Focal_final.pth'
+    else: 
+        save_name = f'{SAVED_MODEL_PATH}{BACKBONE}_Fold{VAL_FOLD_ID}_Size{IMG_SIZE}_final.pth'
+    torch.save(model.state_dict(), save_name)

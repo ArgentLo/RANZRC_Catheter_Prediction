@@ -1,21 +1,31 @@
 import os
+import torch
 
 #### Regular args
-BATCH_SIZE   = 64  # 64
+BATCH_SIZE   = 32  # 64
 WARMUP_EPOCH = 1
-COSINE_EPO   = 35
+COSINE_EPO   = 15
 N_EPOCHS     = WARMUP_EPOCH + COSINE_EPO  # 30
-INIT_LR      = 3e-4  # 5e-4
-EARLY_STOP   = 7  # if ReStart, should give longer epochs to find minimun after Great LR.  
+INIT_LR      = 2e-4  # 5e-4
+EARLY_STOP   = 7  # if ReStart, should give longer epochs to find minimun after Great LR.
+use_FocalLoss = False
+ClassWeights  = torch.tensor([1 for _ in range(7)] + [4]*3 + [1])
+# ClassWeights  = torch.tensor([1 for _ in range(11)])
+
+# Image size
+IMG_SIZE = 640  # 512, 640, 1024
+DATA_PATH = "/home/argent/kaggle/RANZCR_catheter/dataset/train_resized_{}".format(IMG_SIZE)
+
+# Resume
 RESUME_FOLD  = None  # None
 RESUME_PATH  = None  #"./saved_models/resnet200d_Fold{}_best_AUC.pth".format(RESUME_FOLD)
 
 #### Backbone
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-# BACKBONE = "effnet_b3"
+BACKBONE = "effnet_b3"
 # BACKBONE = "effnet_b0"
 # BACKBONE = "resnest50d"  # resnest
-BACKBONE = "rexnet_100"  # rexnet
+# BACKBONE = "rexnet_100"  # rexnet
 # BACKBONE = "resnet200d"
 
 
@@ -26,7 +36,6 @@ DEBUG_SIZE = 0.10
 
 ###############################################
 ###############################################
-DATA_PATH        = "/home/argent/kaggle/RANZCR_catheter/dataset/train"
 SAVED_MODEL_PATH = "./saved_models/"
 
 TARGET_COLS = ['ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal', 
@@ -36,7 +45,6 @@ TARGET_COLS = ['ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
 
 USE_AMP = True
 DataParallel = False
-IMG_SIZE = 512
 SEED = 4213
 VAL_BATCH_SIZE = 32
 NUM_WORKERS = 8
