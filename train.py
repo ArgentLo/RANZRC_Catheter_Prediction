@@ -106,7 +106,7 @@ if RESUME_FOLD:
 for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
 
     # Load train.csv
-    df_train = pd.read_csv('./dataset/train_with_folds.csv')
+    df_train = pd.read_csv('./dataset/train_11_folds.csv')
     df_train["file_path"] = df_train.StudyInstanceUID.apply(lambda x: os.path.join(DATA_PATH, f'{x}.png'))  # resize jpg to png
 
     # DEBUG mode

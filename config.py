@@ -17,7 +17,7 @@ IMG_SIZE = 1024  # 512, 640, 1024
 DATA_PATH = "/home/argent/kaggle/RANZCR_catheter/dataset/train_resized_{}".format(IMG_SIZE)
 
 # Resume
-RESUME_FOLD  = None  # None
+RESUME_FOLD  = 0  # None
 RESUME_PATH  = None  #"./saved_models/resnet200d_Fold{}_best_AUC.pth".format(RESUME_FOLD)
 
 #### Backbone
