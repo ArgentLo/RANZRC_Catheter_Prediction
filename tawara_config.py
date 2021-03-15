@@ -1,8 +1,6 @@
-import sys
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from pathlib import Path
-
-# sys.path.append('../input/pytorch-image-models/pytorch-image-models-master')
-# sys.path.append("../input/pytorch-pfn-extras/pytorch-pfn-extras-0.3.2/")
 
 
 ROOT   = Path.cwd()

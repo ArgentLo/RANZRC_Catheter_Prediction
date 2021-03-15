@@ -27,8 +27,6 @@ from torchvision import models as torchvision_models
 import timm
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions as ppe_extensions
-# sys.path.append('../input/pytorch-image-models/pytorch-image-models-master')
-# sys.path.append("../input/pytorch-pfn-extras/pytorch-pfn-extras-0.3.2/")
 
 from tawara_config import *
 
@@ -566,6 +564,39 @@ class MyROCAUC(nn.Module):
         return self.compute()
 
 
+def set_extensions(
+    manager, args, model, device,
+    val_loader, optimizer,
+    eval_manager, print_progress: bool = False,
+):
+    """Set extensions for PPE"""
+    eval_names = ["val/{}".format(name) for name in eval_manager.metric_names]
+    
+    log_extentions = [
+        ppe_extensions.observe_lr(optimizer=optimizer),
+        ppe_extensions.LogReport(),
+        ppe_extensions.PlotReport(["train/loss", "val/loss"], 'epoch', filename='loss.png'),
+        ppe_extensions.PlotReport(["lr"], 'epoch', filename='lr.png'),
+        ppe_extensions.PrintReport([
+            "epoch", "iteration", "lr", "train/loss", *eval_names, "elapsed_time"])
+    ]
+    if print_progress:
+        log_extentions.append(ppe_extensions.ProgressBar(update_interval=20))
+
+    for ext in log_extentions:
+        manager.extend(ext)
+        
+    manager.extend( # evaluation
+        ppe_extensions.Evaluator(
+            val_loader, model,
+            eval_func=lambda *batch: run_eval(args, model, device, batch, eval_manager)),
+        trigger=(1, "epoch"))
+    
+    manager.extend(  # model snapshot
+        ppe_extensions.snapshot(target=model, filename="snapshot_epoch_{.epoch}.pth"),
+        trigger=ppe.training.triggers.MaxValueTrigger(key="val/metric", trigger=(1, 'epoch')))
+
+    return manager
 
 
 ##################################################

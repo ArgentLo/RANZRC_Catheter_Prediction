@@ -1,37 +1,18 @@
 import gc
-import os
 import sys
-import time
+sys.path.append('../extension/pytorch-image-models-master')
+# sys.path.append("../extension/pytorch-pfn-extras-0.3.2/")
 import copy
-import random
 import shutil
-import typing as tp
-from pathlib import Path
-from argparse import ArgumentParser
-
 import yaml
 import numpy as np
 import pandas as pd
-from scipy.sparse import coo_matrix
-from sklearn.metrics import roc_auc_score
-
-from tqdm import tqdm
-from joblib import Parallel, delayed
-
-import cv2
-import albumentations
-
-from albumentations.core.transforms_interface import ImageOnlyTransform, DualTransform
-from albumentations.pytorch import ToTensorV2
 
 import torch
 from torch import nn
-from torch.utils import data
-from torchvision import models as torchvision_models
-import timm
 import pytorch_pfn_extras as ppe
-from pytorch_pfn_extras.training import extensions as ppe_extensions
 
+print("Import")
 from tawara_config import *
 from tawara_utils  import *
 
@@ -41,8 +22,8 @@ from tawara_utils  import *
 
 train_data_arr = np.load("./dataset/train_640x640.npy", mmap_mode="r")
 
-for p in DATA.iterdir():
-    print(p.name)
+# for p in DATA.iterdir():
+#     print(p.name)
 
 train = pd.read_csv(DATA / "train.csv")
 smpl_sub =  pd.read_csv(DATA / "sample_submission.csv")
@@ -85,17 +66,16 @@ gc.collect()
 # Train Function
 ##################################################
 
-def run_train_loop(
-    manager, stgs, model, device, train_loader, optimizer, scheduler, loss_func
-):
+def run_train_loop(manager, stgs, model, device, train_loader, optimizer, scheduler, loss_func):
     """Run minibatch training loop"""
     step_scheduler_by_epoch, step_scheduler_by_iter = get_stepper(manager, stgs, scheduler)
 
-    if stgs["globals"]["use_amp"]:     
+    if stgs["globals"]["use_amp"]:
+        print(">>> Using AMP Training...")
         while not manager.stop_trigger:
             model.train()
             scaler = torch.cuda.amp.GradScaler()
-            for x, t in train_loader:
+            for x, t in tqdm(train_loader):
                 with manager.run_iteration():
                     x, t = x.to(device), t.to(device)
                     optimizer.zero_grad()
