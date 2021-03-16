@@ -97,7 +97,7 @@ class Test_Dataset(Dataset):
 # Training Augmentation
 Transforms_Train = A.Compose([
 
-    A.RandomResizedCrop(IMG_SIZE, IMG_SIZE, scale=(0.9, 1.2), p=1), 
+    A.RandomResizedCrop(IMG_SIZE, IMG_SIZE, scale=(0.8, 1.2), p=1), 
     A.HorizontalFlip(p=0.5),
 
     # Brightness + Contract
@@ -120,7 +120,7 @@ Transforms_Train = A.Compose([
     A.Resize(IMG_SIZE, IMG_SIZE),
     
     # cut holes on imgs
-    A.Cutout(max_h_size=int(IMG_SIZE * 0.10), max_w_size=int(IMG_SIZE * 0.10), num_holes=3, p=0.5),
+    A.Cutout(max_h_size=int(IMG_SIZE * 0.10), max_w_size=int(IMG_SIZE * 0.10), num_holes=3, p=0.35),
     A.Normalize(),
 ])
 
