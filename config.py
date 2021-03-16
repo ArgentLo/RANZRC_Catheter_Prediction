@@ -2,14 +2,14 @@ import os
 import torch
 
 #### Regular args
-BATCH_SIZE   = 8  # 64
+BATCH_SIZE   = 12  # 64
 WARMUP_EPOCH = 1
-COSINE_EPO   = 30
+COSINE_EPO   = 20
 N_EPOCHS     = WARMUP_EPOCH + COSINE_EPO  # 30
-INIT_LR      = 5e-5  # 5e-4
-EARLY_STOP   = 3  # if ReStart, should give longer epochs to find minimun after Great LR.
+INIT_LR      = 3e-5  # 5e-4
+EARLY_STOP   = 5  # if ReStart, should give longer epochs to find minimun after Great LR.
 use_FocalLoss = False
-ClassWeights  = torch.tensor([1 for _ in range(7)] + [3]*3 + [1])
+ClassWeights  = torch.tensor([1 for _ in range(7)] + [2]*3 + [1])
 # ClassWeights  = torch.tensor([1 for _ in range(11)])
 
 # Image size
@@ -22,11 +22,11 @@ RESUME_PATH  = None  #"./saved_models/resnet200d_Fold{}_best_AUC.pth".format(RES
 
 #### Backbone
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-# BACKBONE = "effnet_b3"
+BACKBONE = "effnet_b3"
 # BACKBONE = "effnet_b0"
 # BACKBONE = "resnest50d"  # resnest
 # BACKBONE = "rexnet_100"  # rexnet
-BACKBONE = "resnet200d"
+# BACKBONE = "resnet200d"
 
 
 #### Debug mode
@@ -46,6 +46,6 @@ TARGET_COLS = ['ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
 USE_AMP = True
 DataParallel = False
 SEED = 9527
-VAL_BATCH_SIZE = 32
+VAL_BATCH_SIZE = 16
 NUM_WORKERS = 8
 WARMUP_Multiplier = 10
