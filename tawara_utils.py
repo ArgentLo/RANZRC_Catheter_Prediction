@@ -1,39 +1,41 @@
 import gc
 import os
-import sys
 import time
-import copy
 import random
-import shutil
 import typing as tp
-from pathlib import Path
-from argparse import ArgumentParser
-import yaml
 import numpy as np
-import pandas as pd
 from scipy.sparse import coo_matrix
 from sklearn.metrics import roc_auc_score
-from tqdm import tqdm
-from joblib import Parallel, delayed
-import cv2
 import albumentations
 from albumentations.core.transforms_interface import ImageOnlyTransform, DualTransform
-from albumentations.pytorch import ToTensorV2
 
 import torch
 from torch import nn
 from torch.utils import data
-from torchvision import models as torchvision_models
 import timm
 import pytorch_pfn_extras as ppe
 from pytorch_pfn_extras.training import extensions as ppe_extensions
+from albumentations.core.transforms_interface import ImageOnlyTransform, DualTransform
+from albumentations.pytorch import ToTensorV2
 
 from tawara_config import *
+
+def run_eval(stgs, model, device, batch, eval_manager):
+    """Run evaliation for val or test. this function is applied to each batch."""
+    model.eval()
+    x, t = batch
+    if stgs["globals"]["use_amp"]:
+        with torch.cuda.amp.autocast(): 
+            y = model(x.to(device))
+            eval_manager(y, t.to(device))
+    else:
+        y = model(x.to(device))
+        eval_manager(y, t.to(device))
+
 
 ##################################################
 ##############    Numpy Dataloader    ############
 ##################################################
-
 
 def get_file_list_with_array(stgs, train_all):
     """Get file path and target info."""
@@ -54,8 +56,15 @@ def get_file_list_with_array(stgs, train_all):
 
     train_file_list = [
         (train_data_arr[idx][..., None], label_arr[idx])  for idx in train_idx]
+
+
     val_file_list = [
         (train_data_arr[idx][..., None], label_arr[idx])  for idx in val_idx]
+
+    if DEBUG:
+        train_file_list = train_file_list[:50]
+        val_file_list   = val_file_list[:50]
+    print(">>>>>>>>  Train Examples: ", len(train_file_list))
 
     return train_file_list, val_file_list
 
@@ -194,7 +203,228 @@ class MultiHeadModel(nn.Module):
             getattr(self, f"head_{i}")(h) for i in range(self.n_heads)]
         y = torch.cat(hs, axis=1)
         return y
+
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
     
+class MultiHead_DenseNet121(nn.Module):
+    
+    def __init__(self, out_dims_head: tp.List[int]=[3, 4, 3, 1], pretrained=False):
+        """"""
+        self.base_name = "densenet121"
+        self.n_heads = len(out_dims_head)
+        super(MultiHead_DenseNet121, self).__init__()
+        
+        # # load base model
+        base_model = timm.create_model(
+            self.base_name, num_classes=sum(out_dims_head), pretrained=False)
+        in_features = base_model.num_features
+        
+        if pretrained:
+            print("\n>>>>>>>>>>>\nLoading Pretrained Models\n>>>>>>>>>>>\n")
+            pretrained_model_path = './saved_models/densenet121_chestx.pth'
+            state_dict = dict()
+            for k, v in torch.load(pretrained_model_path, map_location='cpu')["model"].items():
+                if k[:6] == "model.":
+                    k = k.replace("model.", "")
+                state_dict[k] = v
+            base_model.load_state_dict(state_dict)
+        
+        # # remove global pooling and head classifier
+        base_model.reset_classifier(0, '')
+        
+        # # Shared CNN Bacbone
+        self.backbone = base_model
+        
+        # # Multi Heads.
+        for i, out_dim in enumerate(out_dims_head):
+            layer_name = f"head_{i}"
+            layer = nn.Sequential(
+                SpatialAttentionBlock(in_features, [64, 32, 16, 1]),
+                nn.AdaptiveAvgPool2d(output_size=1),
+                nn.Flatten(start_dim=1),
+                nn.Linear(in_features, in_features),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
+                nn.Linear(in_features, out_dim))
+            setattr(self, layer_name, layer)
+
+    def forward(self, x):
+        h = self.backbone(x)
+        hs = [
+            getattr(self, f"head_{i}")(h) for i in range(self.n_heads)]
+        y = torch.cat(hs, axis=1)
+        return y
+
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
+    
+class MultiHead_InceptionV3(nn.Module):
+    
+    def __init__(self, out_dims_head: tp.List[int]=[3, 4, 3, 1], pretrained=False):
+        """"""
+        self.base_name = "inception_v3"
+        self.n_heads = len(out_dims_head)
+        super(MultiHead_InceptionV3, self).__init__()
+        
+        # # load base model
+        base_model = timm.create_model(
+            self.base_name, num_classes=sum(out_dims_head), pretrained=False)
+        in_features = base_model.num_features
+        
+        if pretrained:
+            print("\n>>>>>>>>>>>\nLoading Pretrained Models\n>>>>>>>>>>>\n")
+            pretrained_model_path = './saved_models/inception_v3_chestx.pth'
+            state_dict = dict()
+            for k, v in torch.load(pretrained_model_path, map_location='cpu')["model"].items():
+                if k[:6] == "model.":
+                    k = k.replace("model.", "")
+                state_dict[k] = v
+            base_model.load_state_dict(state_dict)
+        
+        # # remove global pooling and head classifier
+        base_model.reset_classifier(0, '')
+        
+        # # Shared CNN Bacbone
+        self.backbone = base_model
+        
+        # # Multi Heads.
+        for i, out_dim in enumerate(out_dims_head):
+            layer_name = f"head_{i}"
+            layer = nn.Sequential(
+                SpatialAttentionBlock(in_features, [64, 32, 16, 1]),
+                nn.AdaptiveAvgPool2d(output_size=1),
+                nn.Flatten(start_dim=1),
+                nn.Linear(in_features, in_features),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
+                nn.Linear(in_features, out_dim))
+            setattr(self, layer_name, layer)
+
+    def forward(self, x):
+        h = self.backbone(x)
+        hs = [
+            getattr(self, f"head_{i}")(h) for i in range(self.n_heads)]
+        y = torch.cat(hs, axis=1)
+        return y
+
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
+    
+class MultiHead_EffNetb5(nn.Module):
+    
+    def __init__(self, out_dims_head: tp.List[int]=[3, 4, 3, 1], pretrained=False):
+        """"""
+        self.base_name = "efficientnet_b5"
+        self.n_heads = len(out_dims_head)
+        super(MultiHead_EffNetb5, self).__init__()
+        
+        # # load base model
+        base_model = timm.create_model(
+            self.base_name, num_classes=sum(out_dims_head), pretrained=False)
+        in_features = base_model.num_features
+        
+        if pretrained:
+            print("\n>>>>>>>>>>>\nLoading Pretrained Models\n>>>>>>>>>>>\n")
+            pretrained_model_path = './saved_models/tf_efficientnet_b5_ns_chestx.pth'
+            state_dict = dict()
+            for k, v in torch.load(pretrained_model_path, map_location='cpu')["model"].items():
+                if k[:6] == "model.":
+                    k = k.replace("model.", "")
+                state_dict[k] = v
+            base_model.load_state_dict(state_dict)
+        
+        # # remove global pooling and head classifier
+        base_model.reset_classifier(0, '')
+        
+        # # Shared CNN Bacbone
+        self.backbone = base_model
+        
+        # # Multi Heads.
+        for i, out_dim in enumerate(out_dims_head):
+            layer_name = f"head_{i}"
+            layer = nn.Sequential(
+                SpatialAttentionBlock(in_features, [64, 32, 16, 1]),
+                nn.AdaptiveAvgPool2d(output_size=1),
+                nn.Flatten(start_dim=1),
+                nn.Linear(in_features, in_features),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
+                nn.Linear(in_features, out_dim))
+            setattr(self, layer_name, layer)
+
+    def forward(self, x):
+        h = self.backbone(x)
+        hs = [
+            getattr(self, f"head_{i}")(h) for i in range(self.n_heads)]
+        y = torch.cat(hs, axis=1)
+        return y
+
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
+class MultiHead_SeResNet152d(nn.Module):
+    
+    def __init__(self, out_dims_head: tp.List[int]=[3, 4, 3, 1], pretrained=False):
+        """"""
+        self.base_name = "seresnet152d"
+        self.n_heads = len(out_dims_head)
+        super(MultiHead_SeResNet152d, self).__init__()
+        
+        # # load base model
+        base_model = timm.create_model(
+            self.base_name, num_classes=sum(out_dims_head), pretrained=False)
+        in_features = base_model.num_features
+        
+        if pretrained:
+            print("\n>>>>>>>>>>>\nLoading Pretrained Models\n>>>>>>>>>>>\n")
+            pretrained_model_path = './saved_models/seresnet152d_chestx.pth'
+            state_dict = dict()
+            for k, v in torch.load(pretrained_model_path, map_location='cpu')["model"].items():
+                if k[:6] == "model.":
+                    k = k.replace("model.", "")
+                state_dict[k] = v
+            base_model.load_state_dict(state_dict)
+        
+        # # remove global pooling and head classifier
+        base_model.reset_classifier(0, '')
+        
+        # # Shared CNN Bacbone
+        self.backbone = base_model
+        
+        # # Multi Heads.
+        for i, out_dim in enumerate(out_dims_head):
+            layer_name = f"head_{i}"
+            layer = nn.Sequential(
+                SpatialAttentionBlock(in_features, [64, 32, 16, 1]),
+                nn.AdaptiveAvgPool2d(output_size=1),
+                nn.Flatten(start_dim=1),
+                nn.Linear(in_features, in_features),
+                nn.ReLU(inplace=True),
+                nn.Dropout(0.5),
+                nn.Linear(in_features, out_dim))
+            setattr(self, layer_name, layer)
+
+    def forward(self, x):
+        """"""
+        h = self.backbone(x)
+        hs = [
+            getattr(self, f"head_{i}")(h) for i in range(self.n_heads)]
+        y = torch.cat(hs, axis=1)
+        return y
+
+
     
 class MultiHeadResNet200D(nn.Module):
     
@@ -575,8 +805,8 @@ def set_extensions(
     log_extentions = [
         ppe_extensions.observe_lr(optimizer=optimizer),
         ppe_extensions.LogReport(),
-        ppe_extensions.PlotReport(["train/loss", "val/loss"], 'epoch', filename='loss.png'),
-        ppe_extensions.PlotReport(["lr"], 'epoch', filename='lr.png'),
+        # ppe_extensions.PlotReport(["train/loss", "val/loss"], 'epoch', filename='loss.png'),
+        # ppe_extensions.PlotReport(["lr"], 'epoch', filename='lr.png'),
         ppe_extensions.PrintReport([
             "epoch", "iteration", "lr", "train/loss", *eval_names, "elapsed_time"])
     ]
