@@ -14,7 +14,7 @@ ClassWeights  = torch.tensor([1 for _ in range(7)] + [2]*3 + [1])
 
 # Image size
 IMG_SIZE = 1024  # 512, 640, 1024
-DATA_PATH = "/home/argent/kaggle/RANZCR_catheter/dataset/train_resized_{}".format(IMG_SIZE)
+DATA_PATH = "./dataset/train_resized_{}".format(IMG_SIZE)
 
 # Resume
 RESUME_FOLD  = 0  # None
