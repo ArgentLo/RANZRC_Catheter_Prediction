@@ -9,7 +9,6 @@ This is a X-Rays Catheters Position Classification framework based on few state-
 </p>
 
 
-
 ## Introduction to Catheters Position Recognition
 
 From **X-Ray images**, radiologists can check and diagnose **malpositioned lines and tubes** in patients, which can cause serious complications. 
@@ -22,7 +21,11 @@ Not only does this leave room for **human error**, but delays are also common as
 
 - **Deep learning algorithms** may be able to **automatically detect** malpositioned catheters and lines.
 - Once alerted, clinicians can reposition or remove them to avoid life-threatening complications.
-- This is a X-Rays Catheters Position Classification framework based on few state-of-the-art Convolutional Neural Networks.
+- This is a X-Rays Catheters Position Classification framework based on few **state-of-the-art** Convolutional Neural Networks.
+    - **ReXNet**: ["Rethinking Channel Dimensions for Efficient Model Design"](https://arxiv.org/abs/2007.00992)
+    - **SeResNet**: ["Squeeze-and-Excitation Networks"](https://arxiv.org/abs/1709.01507)
+    - **EfficientNet**: ["EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks"](https://arxiv.org/abs/1905.11946)
+    - **ResNeSt**: ["ResNeSt: Split-Attention Networks"](https://arxiv.org/abs/2004.08955)
 
 ----
 
@@ -44,7 +47,7 @@ tqdm
 
 - **Configuration**
 
-All parameters, such as `batch_size`, `learning_rate`, `loss_func`, can be adjust to fix your need in `config.py` and `multi_config.py`.
+All parameters, such as `backbone_model` and `loss_func`, can be adjust to fix your need in `config.py` and `multi_config.py`.
 
 - **Preprocess Image Data**
 
