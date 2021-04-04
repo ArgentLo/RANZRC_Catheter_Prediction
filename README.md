@@ -10,23 +10,19 @@ This is a X-Rays Catheters Position Classification framework based on few state-
 
 
 
-
 ## Introduction to Catheters Position Recognition
 
-Serious complications can occur as a result of malpositioned lines and tubes in patients. 
+From **X-Ray images**, radiologists can check and diagnose **malpositioned lines and tubes** in patients, which can cause serious complications. 
 Doctors and nurses frequently use checklists for placement of lifesaving equipment to ensure they follow protocol in managing patients. 
 Yet, these steps can be time consuming and are still prone to human error, especially in stressful situations when hospitals are at capacity.
 
-Hospital patients can have catheters and lines inserted during the course of their admission and serious complications can arise if they are positioned incorrectly. 
-
-The gold standard for the confirmation of line and tube positions are chest radiographs. 
+The gold standard for the confirmation of line and tube positions are **chest radiographs**(X-Ray images). 
 However, a physician or radiologist must manually check these chest x-rays to verify that the lines and tubes are in the optimal position. 
 Not only does this leave room for **human error**, but delays are also common as radiologists can be busy reporting other scans. 
-**Deep learning algorithms may be able to automatically detect malpositioned catheters and lines.**
- Once alerted, clinicians can reposition or remove them to avoid life-threatening complications.
 
-
-
+- **Deep learning algorithms** may be able to **automatically detect** malpositioned catheters and lines.
+- Once alerted, clinicians can reposition or remove them to avoid life-threatening complications.
+- This is a X-Rays Catheters Position Classification framework based on few state-of-the-art Convolutional Neural Networks.
 
 ----
 
@@ -51,7 +47,9 @@ tqdm
 All parameters, such as `batch_size`, `learning_rate`, `loss_func`, can be adjust to fix your need in `config.py` and `multi_config.py`.
 
 - **Preprocess Image Data**
+
 Run the preprocessing before training or evaluation.
+
 ```python
 python preproc_npy.py
 ```
@@ -90,11 +88,11 @@ In fact, X-Rays datasets are rather "rare", some widely-used **Chest X-Rays Publ
     - A catheter, in medicine, is a **thin tube** made from medical grade materials serving a broad range of functions.
     
     <p align="center">
-        <img src="https://github.com/ArgentLo/X-Rays-Lines-and-Catheters-Classification/blob/main/imgs/draw1.png" width="822" height="369">
+        <img src="https://github.com/ArgentLo/X-Rays-Lines-and-Catheters-Classification/blob/main/imgs/draw1.png" width="750" height="336">
     </p>
 
     <p align="center">
-        <img src="https://github.com/ArgentLo/X-Rays-Lines-and-Catheters-Classification/blob/main/imgs/draw2.png" width="711" height="315">
+        <img src="https://github.com/ArgentLo/X-Rays-Lines-and-Catheters-Classification/blob/main/imgs/draw2.png" width="750" height="332">
     </p>
 
 
