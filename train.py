@@ -1,8 +1,5 @@
 import pandas as pd
 import numpy as np
-import sys
-# sys.path.append('../input/pytorch-image-models/pytorch-image-models-master')
-# sys.path.append('../input/timm-pytorch-image-models/pytorch-image-models-master')
 import os
 import time
 import torch
@@ -15,11 +12,11 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 
-from model import RANZCRResNet200D, EffNet_b3, EffNet_b0, RESNEST_50D, REXNET_100
-from dataset import RANZERDataset, Transforms_Train, Transforms_Valid
+from model import ResNet200D, EffNet_b3, EffNet_b0, RESNEST_50D, REXNET_100
+from dataset import Train_Dataset, Transforms_Train, Transforms_Valid
 from utils import *
 from config import *
-from lamb import Lamb, log_lamb_rs
+from lamb_optimizer import Lamb, log_lamb_rs
 
 
 ##################################################################
@@ -114,11 +111,11 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
         df_train = df_train.sample(frac=DEBUG_SIZE)
 
     # Load image dataset
-    dataset = RANZERDataset(df_train, 'train', transform=Transforms_Train)
+    dataset = Train_Dataset(df_train, 'train', transform=Transforms_Train)
     df_train_this = df_train[df_train['fold'] != VAL_FOLD_ID]
     df_valid_this = df_train[df_train['fold'] == VAL_FOLD_ID]
-    dataset_train = RANZERDataset(df_train_this, 'train', transform=Transforms_Train)
-    dataset_valid = RANZERDataset(df_valid_this, 'valid', transform=Transforms_Valid)
+    dataset_train = Train_Dataset(df_train_this, 'train', transform=Transforms_Train)
+    dataset_valid = Train_Dataset(df_valid_this, 'valid', transform=Transforms_Valid)
 
     # Dataloader
     train_loader = torch.utils.data.DataLoader(dataset_train, batch_size=BATCH_SIZE, shuffle=True,  num_workers=NUM_WORKERS, pin_memory=True)
@@ -130,7 +127,7 @@ for VAL_FOLD_ID in range(FOLD_MIN, FOLD_MAX):
     elif BACKBONE == "effnet_b0":
         model = EffNet_b0(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "resnet200d":
-        model = RANZCRResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
+        model = ResNet200D(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "resnest50d":
         model = RESNEST_50D(out_dim=len(TARGET_COLS), pretrained=True)
     elif BACKBONE == "rexnet_100":

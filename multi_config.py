@@ -2,7 +2,7 @@ import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from pathlib import Path
 IMG_SIZE = 512
-BACKBONE =  "MultiHead_InceptionV3"  # "MultiHead_DenseNet121" "MultiHead_SeResNet152d" "MultiHeadResNet200D" "MultiHead_EffNetb5"
+BACKBONE =  "MultiHead_DenseNet121"  # "MultiHead_SeResNet152d" "MultiHeadResNet200D" "MultiHead_EffNetb5"
 DEBUG = False
 
 ROOT   = Path.cwd()
@@ -14,19 +14,6 @@ TEST   = DATA / "test"
 
 TRAIN_NPY = DATA
 TMP = ROOT / "saved_models"
-
-RANDAM_SEED = 4213
-N_CLASSES = 11
-# FOLDS = [0, 1, 2, 3, 4]
-# N_FOLD = len(FOLDS)
-FOLDS = [0, 2, 4]
-N_FOLD = 5
-SAVED_MODEL_PATH = "./saved_models/"
-CLASSES = [
-    'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
-    'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
-    'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal', 'Swan Ganz Catheter Present'
-]
 
 stgs_str = """
 globals:
@@ -87,3 +74,17 @@ scheduler:
     T_0: 16
     T_mult: 1
 """
+
+
+RANDAM_SEED = 4213
+N_CLASSES = 11
+# FOLDS = [0, 1, 2, 3, 4]
+# N_FOLD = len(FOLDS)
+FOLDS = [0, 2, 4]
+N_FOLD = 5
+SAVED_MODEL_PATH = "./saved_models/"
+CLASSES = [
+    'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
+    'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
+    'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal', 'Swan Ganz Catheter Present'
+]

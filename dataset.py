@@ -12,80 +12,7 @@ filterwarnings("ignore")
 from config import *
 
 
-class RANZERDataset(Dataset):
-
-    def __init__(self, df, mode, transform=None):
-        
-        # print("DATA PATH:", df.iloc[0])
-        self.df = df.reset_index(drop=True)
-        self.mode = mode
-        self.transform = transform
-        self.labels = df[TARGET_COLS].values  # 11 cols to predict
-        
-    def __len__(self):
-        return len(self.df)
-    
-    def __getitem__(self, index):
-        row = self.df.loc[index]
-
-        img = cv2.imread(row.file_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        if self.transform is not None:
-            res = self.transform(image=img)
-            img = res['image']
-                
-        img = img.astype(np.float32)
-        img = img.transpose(2,0,1)
-        label = torch.tensor(self.labels[index]).float()
-        if self.mode == 'test':
-            return torch.tensor(img).float()
-        else:
-            return torch.tensor(img).float(), label
-
-
-class Test_Dataset(Dataset):
-
-    def __init__(self, df, mode, transform=None):
-        
-        # print("DATA PATH:", df.iloc[0])
-        self.df = df.reset_index(drop=True)
-        self.mode = mode
-        self.transform = transform
-        self.labels = df[TARGET_COLS].values  # 11 cols to predict
-        
-    def __len__(self):
-        return len(self.df)
-    
-    def __getitem__(self, index):
-        row = self.df.loc[index]
-
-        img = cv2.imread(row.file_path)
-
-        # preprocessing to remove black 
-        mask  = img > 0
-        image = img[np.ix_(mask.any(1), mask.any(0))]
-
-
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        if self.transform is not None:
-            res = self.transform(image=img)
-            img = res['image']
-                
-        img = img.astype(np.float32)
-        img = img.transpose(2,0,1)
-        label = torch.tensor(self.labels[index]).float()
-        if self.mode == 'test':
-            return torch.tensor(img).float()
-        else:
-            return torch.tensor(img).float(), label
-
-
-######################################################
 #################     Augmentation     ###############
-######################################################
-
 
 # # Plain Training Augmentation
 # Transforms_Train = A.Compose([
@@ -131,6 +58,74 @@ Transforms_Valid = A.Compose([
     A.Normalize()
 ])
 
-######################################################
 #################     Augmentation     ###############
-######################################################
+
+
+
+class Train_Dataset(Dataset):
+
+    def __init__(self, df, mode, transform=None):
+        
+        self.df = df.reset_index(drop=True)
+        self.mode = mode
+        self.transform = transform
+        self.labels = df[TARGET_COLS].values  # 11 cols to predict
+        
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, index):
+        row = self.df.loc[index]
+
+        img = cv2.imread(row.file_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        if self.transform is not None:
+            res = self.transform(image=img)
+            img = res['image']
+                
+        img = img.astype(np.float32)
+        img = img.transpose(2,0,1)
+        label = torch.tensor(self.labels[index]).float()
+        if self.mode == 'test':
+            return torch.tensor(img).float()
+        else:
+            return torch.tensor(img).float(), label
+
+
+class Test_Dataset(Dataset):
+
+    def __init__(self, df, mode, transform=None):
+
+        self.df = df.reset_index(drop=True)
+        self.mode = mode
+        self.transform = transform
+        self.labels = df[TARGET_COLS].values  # 11 cols to predict
+        
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, index):
+        row = self.df.loc[index]
+
+        img = cv2.imread(row.file_path)
+
+        # preprocessing to remove black 
+        mask  = img > 0
+        image = img[np.ix_(mask.any(1), mask.any(0))]
+
+
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        if self.transform is not None:
+            res = self.transform(image=img)
+            img = res['image']
+                
+        img = img.astype(np.float32)
+        img = img.transpose(2,0,1)
+        label = torch.tensor(self.labels[index]).float()
+        if self.mode == 'test':
+            return torch.tensor(img).float()
+        else:
+            return torch.tensor(img).float(), label
+
