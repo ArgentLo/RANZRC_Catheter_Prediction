@@ -1,10 +1,6 @@
 from config import DEBUG
 import gc
-import sys
-sys.path.append('../extension/pytorch-image-models-master')
-# sys.path.append("../extension/pytorch-pfn-extras-0.3.2/")
 import copy
-import shutil
 import yaml
 import numpy as np
 import pandas as pd
